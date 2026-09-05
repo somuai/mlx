@@ -748,6 +748,18 @@ TEST_CASE("test shapeless compile") {
     out2 = cfun({array({1.0, 2.0}, {1, 2})})[0];
     CHECK_NE(out.inputs()[1].id(), out2.inputs()[1].id());
   }
+
+  {
+    auto compile_shapeless_scan = [](const std::vector<array>& inputs) {
+      return std::vector<array>{cumsum(inputs[0], 0)};
+    };
+    auto cfun = compile(compile_shapeless_scan, /* shapeless */ true);
+    auto out1 = cfun({array({1.0f, 2.0f, 3.0f})})[0];
+    CHECK(array_equal(out1, array({1.0f, 3.0f, 6.0f})).item<bool>());
+
+    auto out2 = cfun({array({1.0f, 2.0f, 3.0f, 4.0f})})[0];
+    CHECK(array_equal(out2, array({1.0f, 3.0f, 6.0f, 10.0f})).item<bool>());
+  }
 }
 
 auto compile_broadcast_add(const std::vector<array>& inputs) {

@@ -643,6 +643,39 @@ class TestCompile(mlx_tests.MLXTestCase):
 
         self.assertEqual(mx.compile(fun, shapeless=True)(x).shape, (1, 1, 4, 32))
 
+    def test_shapeless_compile_scan(self):
+        @partial(mx.compile, shapeless=True)
+        def fun(x):
+            return mx.cumsum(x, axis=0)
+
+        x1 = mx.arange(4, dtype=mx.float32)
+        out1 = fun(x1)
+        mx.eval(out1)
+        self.assertTrue(mx.array_equal(out1, mx.array([0.0, 1.0, 3.0, 6.0])))
+
+        x2 = mx.arange(6, dtype=mx.float32)
+        out2 = fun(x2)
+        mx.eval(out2)
+        self.assertTrue(
+            mx.array_equal(out2, mx.array([0.0, 1.0, 3.0, 6.0, 10.0, 15.0]))
+        )
+
+        @partial(mx.compile, shapeless=True)
+        def fun2d(x):
+            return mx.cumsum(x, axis=-1)
+
+        x2d = mx.ones((2, 3), dtype=mx.float32)
+        out2d = fun2d(x2d)
+        mx.eval(out2d)
+        self.assertTrue(
+            mx.array_equal(out2d, mx.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]))
+        )
+
+        x2d_larger = mx.ones((3, 5), dtype=mx.float32)
+        out2d_larger = fun2d(x2d_larger)
+        mx.eval(out2d_larger)
+        self.assertEqual(out2d_larger.shape, (3, 5))
+
     def test_shapeless_compile_gather(self):
         x = mx.zeros((1, 1, 32))
 
